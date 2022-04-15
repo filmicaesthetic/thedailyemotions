@@ -1,0 +1,11 @@
+name: articleemotionanalysis
+title:
+username:
+account: filmicaesthetic
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6095154
+bundleId: 5802494
+url: https://filmicaesthetic.shinyapps.io/articleemotionanalysis/
+when: 1650034573.89512
+lastSyncTime: 1650034573.89512
