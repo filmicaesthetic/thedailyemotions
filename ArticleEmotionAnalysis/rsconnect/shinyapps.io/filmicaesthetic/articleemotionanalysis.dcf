@@ -5,7 +5,7 @@ account: filmicaesthetic
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6095154
-bundleId: 5802494
+bundleId: 5804785
 url: https://filmicaesthetic.shinyapps.io/articleemotionanalysis/
-when: 1650034573.89512
-lastSyncTime: 1650034573.89512
+when: 1650108655.57743
+lastSyncTime: 1650108655.57743

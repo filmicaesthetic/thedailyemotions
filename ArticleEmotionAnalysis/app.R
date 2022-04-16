@@ -175,11 +175,11 @@ ui <- fluidPage(
       "The NRC Word-Emotion Association Lexicon is used to identify words with an association to range of core human emotions - words contained within the Lexicon are assigned relevant values for each associated emotion, and the totals of these values are displayed in the charts.",tags$br(),tags$br(),
       textOutput(outputId = "page_width"),
       tags$a(
-        href="https://www.github.com/filmicaesthetic", 
+        href="https://github.com/filmicaesthetic/thedailyemotions", 
         tags$img(src="https://cdn.iconscout.com/icon/free/png-256/github-3215409-2673827.png", 
                  title="Github", 
-                 width="40",
-                 height="40",
+                 width="50",
+                 height="50",
                  style="filter: invert(80%)")
       ),
       useShinyjs(),
@@ -203,7 +203,7 @@ ui <- fluidPage(
           div(class = "plot_title",
               "The Daily Mail says you should feel..."), tags$br(),
           # Output: Charts
-          plotlyOutput(outputId = "emotion_plot", height = 150),
+          plotlyOutput(outputId = "emotion_plot", height = 450),
           div(class = "plot_title",
               "20 Most Recent Articles Ordered by Level\nof Emotional Language Used"),tags$br(),
           plotOutput(outputId = "article_plot")
@@ -232,25 +232,34 @@ server <- function(input, output, session) {
   
   output$emotion_plot <- renderPlotly({
     
-    plot <- emotion_data %>% 
+    plot <- emotion_data %>%
+      filter(values > 0, is.na(values) == FALSE) %>%
+      group_by(emotion, word) %>%
+      mutate(word_count = n()) %>%
+      arrange(-word_count) %>%
       group_by(emotion) %>%
-      summarise(values = sum(values, na.rm = TRUE)) %>% 
-      mutate(emotion = fct_reorder(emotion, values)) %>%
-      ggplot(aes(y = values)) +
-      geom_col(aes(x = 1, fill = emotion, text = paste0(str_to_title(emotion),"\n", round((values / sum(emotion_data$values, na.rm = TRUE)) * 100, 0), "%")), position = position_stack()) +
+      mutate(emotion = fct_reorder(emotion, values),
+             emotion_total = sum(values),
+             emotion_cumsum = cumsum(values)) %>%
+      group_by(emotion, word) %>%
+      summarise(values = sum(values),
+                emotion_cumsum = mean(emotion_cumsum),
+                word_count = mean(word_count, na.rm = TRUE)) %>%
+      ggplot(aes(x = emotion, y = emotion_cumsum)) +
+      geom_point(aes(size = word_count, color = emotion, text = paste0(str_to_title(word), "\nCount: ",word_count)), alpha = 0.9, position = position_dodge2(width = 0.7)) +
+      #geom_col(aes(group = word_count, fill = emotion, text = paste0(str_to_title(word), "\nCount: ",word_count)), color = "grey", alpha = 1, position = position_stack()) +
       labs(fill = NULL) +
-      coord_flip() +
-      scale_fill_manual(values = pal) +
+      scale_color_manual(values = pal) +
+      scale_size(range = c(1, 10)) +
       theme_minimal() +
       theme(legend.position = "none",
-            axis.text = element_blank(),
+            axis.text.y = element_blank(),
             axis.title = element_blank(),
             plot.title = element_text(hjust = 0.5, size = 22),
             text = element_text(family = gfont),
             panel.grid = element_blank())
     
     ggplotly(plot, tooltip = c("text")) %>% config(displayModeBar = F) %>% layout(hoverlabel = list(font = "Poppins", align = "center", size = 40)) 
-    
     
   })
   
@@ -262,11 +271,11 @@ server <- function(input, output, session) {
       ggplot(aes(x = emotion, y = values)) +
       geom_col(aes(fill = emotion)) +
       scale_fill_manual(values = pal) +
-      facet_wrap(~headline, labeller = labeller(headline = label_wrap_gen(30 + input$GetScreenWidth / 150)), ncol = ifelse(input$GetScreenWidth > 500, 2, 1)) +
+      facet_wrap(~headline, labeller = labeller(headline = label_wrap_gen(30 + input$GetScreenWidth / 150)), ncol = ifelse(input$GetScreenWidth > 480, 2, 1)) +
       theme_minimal() +
       labs(fill = NULL) +
-      theme(strip.text = element_text(size = 10),
-            legend.position = "top",
+      theme(strip.text = element_text(size = ifelse(input$GetScreenWidth <= 480, 25, 10)),
+            legend.position = "none",
             axis.text = element_blank(),
             panel.grid.major.x = element_blank(),
             panel.spacing = unit(1, "cm"),
@@ -274,7 +283,7 @@ server <- function(input, output, session) {
             plot.title = element_text(size = 16, hjust = 0.5),
             text = element_text(family = gfont))
     
-  }, height = reactive(1650 + (as.numeric(input$GetScreenWidth <= 500) * 1650)))
+  }, height = reactive(1650 + (as.numeric(input$GetScreenWidth <= 480) * 1850)))
   
 }
 
